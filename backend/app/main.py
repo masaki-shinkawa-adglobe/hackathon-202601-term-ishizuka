@@ -44,7 +44,10 @@ def search(req: TextRequest):
         min_score=MIN_SCORE,
     )
 
+	message = build_final_message(results, text)
+
+
     return {
-        "query": text,
+        "text": message,
         "results": results,
     }

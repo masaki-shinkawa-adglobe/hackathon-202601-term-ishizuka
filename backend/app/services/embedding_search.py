@@ -20,6 +20,30 @@ def embed_text(text: str, model: str) -> np.ndarray:
     q = np.array(response.data[0].embedding, dtype=np.float32)
     return q / (np.linalg.norm(q) + 1e-12)
 
+def build_final_message(search_results, user_input):
+    messages = []
+
+    for item in search_results:
+        title = item["title"]
+        content = item["content"]
+        url = item["url"]
+
+        # AIに内容生成させる
+        answer = generate_content_answer(title, content, user_input)
+
+        # URLを追記
+        message_with_url = f"""{answer}
+
+参考URL:
+{url}
+"""
+
+        messages.append(message_with_url)
+
+    # 1メッセージにまとめる（空行1行あけ）
+    final_message = "\n\n".join(messages)
+
+    return final_message
 
 def search_similar(
     q: np.ndarray,
