@@ -86,7 +86,7 @@ def startup():
     logging.info("startup: done")
 
 
-@app.post("/api/text/")
+@app.post("/api/text")
 def search(req: TextRequest):
     text = req.text.strip()
     if not text:
