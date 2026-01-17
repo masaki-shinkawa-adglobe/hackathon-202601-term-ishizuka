@@ -2,7 +2,7 @@ const WIDGET_ID = "wxt-dolphin-widget";
 const API_URL = "http://localhost:8000/api/text";
 const USE_MOCK = true;
 const MOCK_RESPONSE =
-  "勤怠については下記のような情報がありました！\nhttps://xxxxxx.com/kintai";
+  "勤怠については下記のような情報がありました！業務内容や勤怠ルールは部署によって若干異なる場合がありますので、社内ポータルの最新情報もあわせて確認してください。\n\n1. 勤怠システムへのログイン手順\n- 会社ポータルからアクセス\n- 社員IDとパスワードを入力\n\n2. 休暇申請の流れ\n- 休暇種別を選択\n- 期間と理由を記入\n- 上長へ送信\n\n3. 参考リンク\nhttps://xxxxxx.com/kintai";
 const ERASE_KEYWORDS = [
   "お前を消す方法",
   "おまえをけす方法",
@@ -35,6 +35,8 @@ const createWidget = () => {
       }
       #${WIDGET_ID} .bubble {
         width: 280px;
+        max-width: 600px;
+        min-width: 360px;
         background: #f6f2bf;
         border: 2px solid #2b2b2b;
         border-radius: 12px;
@@ -78,6 +80,9 @@ const createWidget = () => {
         justify-content: flex-end;
         margin-top: 10px;
       }
+      #${WIDGET_ID} .actions.actions-result {
+        gap: 16px;
+      }
       #${WIDGET_ID} .btn {
         padding: 6px 14px;
         border: 2px solid #bdb58f;
@@ -87,7 +92,8 @@ const createWidget = () => {
         cursor: pointer;
       }
       #${WIDGET_ID} .result {
-        max-height: 220px;
+        max-height: 240px;
+        min-height: 120px;
         overflow: auto;
         white-space: pre-wrap;
         line-height: 1.4;
@@ -178,7 +184,7 @@ const createWidget = () => {
       <div class="bubble bubble-result is-hidden">
         <div class="title">結果</div>
         <div class="result result-text"></div>
-        <div class="actions">
+        <div class="actions actions-result">
           <button class="btn btn-speak" type="button">読み上げ</button>
           <button class="btn btn-ok" type="button">OK</button>
         </div>
@@ -245,6 +251,7 @@ const createWidget = () => {
 
   okButton?.addEventListener("click", () => {
     if (textarea) textarea.value = "";
+    stopSpeech();
     setInputMode(true);
   });
 
@@ -304,10 +311,15 @@ const speakText = (text: string) => {
   if (!("speechSynthesis" in window)) return;
   const cleaned = stripUrls(text).trim();
   if (!cleaned) return;
-  window.speechSynthesis.cancel();
+  stopSpeech();
   const utterance = new SpeechSynthesisUtterance(cleaned);
   utterance.lang = "ja-JP";
   window.speechSynthesis.speak(utterance);
+};
+
+const stopSpeech = () => {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
 };
 
 const stripUrls = (text: string) => {
