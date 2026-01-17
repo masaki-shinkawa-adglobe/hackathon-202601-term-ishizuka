@@ -179,6 +179,7 @@ const createWidget = () => {
         <div class="title">結果</div>
         <div class="result result-text"></div>
         <div class="actions">
+          <button class="btn btn-speak" type="button">読み上げ</button>
           <button class="btn btn-ok" type="button">OK</button>
         </div>
       </div>
@@ -189,6 +190,7 @@ const createWidget = () => {
   const searchButton =
     container.querySelector<HTMLButtonElement>(".btn-search");
   const okButton = container.querySelector<HTMLButtonElement>(".btn-ok");
+  const speakButton = container.querySelector<HTMLButtonElement>(".btn-speak");
   const inputBubble = container.querySelector<HTMLDivElement>(".bubble-input");
   const resultBubble =
     container.querySelector<HTMLDivElement>(".bubble-result");
@@ -246,6 +248,11 @@ const createWidget = () => {
     setInputMode(true);
   });
 
+  speakButton?.addEventListener("click", () => {
+    if (!resultText) return;
+    speakText(resultText.textContent ?? "");
+  });
+
   return container;
 };
 
@@ -291,6 +298,20 @@ const escapeHtml = (value: string) => {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+};
+
+const speakText = (text: string) => {
+  if (!("speechSynthesis" in window)) return;
+  const cleaned = stripUrls(text).trim();
+  if (!cleaned) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(cleaned);
+  utterance.lang = "ja-JP";
+  window.speechSynthesis.speak(utterance);
+};
+
+const stripUrls = (text: string) => {
+  return text.replace(/https?:\/\/[^\s]+/g, "");
 };
 
 const eraseIruka = (image: HTMLImageElement | null) => {
