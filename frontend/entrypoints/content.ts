@@ -1,8 +1,18 @@
 const WIDGET_ID = "wxt-dolphin-widget";
 const API_URL = "http://localhost:8000/api/text";
-const USE_MOCK = true;
-const MOCK_RESPONSE =
-  "勤怠については下記のような情報がありました！業務内容や勤怠ルールは部署によって若干異なる場合がありますので、社内ポータルの最新情報もあわせて確認してください。\n\n1. 勤怠システムへのログイン手順\n- 会社ポータルからアクセス\n- 社員IDとパスワードを入力\n\n2. 休暇申請の流れ\n- 休暇種別を選択\n- 期間と理由を記入\n- 上長へ送信\n\n3. 参考リンク\nhttps://xxxxxx.com/kintai";
+const USE_MOCK = false;
+const MOCK_RESPONSE: SearchResponse = {
+  text:
+    "勤怠については下記のような情報がありました！業務内容や勤怠ルールは部署によって若干異なる場合がありますので、社内ポータルの最新情報もあわせて確認してください。\n\n1. 勤怠システムへのログイン手順\n- 会社ポータルからアクセス\n- 社員IDとパスワードを入力\n\n2. 休暇申請の流れ\n- 休暇種別を選択\n- 期間と理由を記入\n- 上長へ送信\n\n3. 参考リンク\nhttps://www.google.com",
+  results: [
+    {
+      title: "勤怠ポリシー",
+      content: "全社共通の勤怠ポリシー概要です。",
+      url: "https://example.com/policy",
+      score: 0.62,
+    },
+  ],
+};
 const ERASE_KEYWORDS = [
   "お前を消す方法",
   "おまえをけす方法",
@@ -17,6 +27,18 @@ const ERASE_ANIMATIONS = [
   "erase-slide",
   "erase-flip",
 ];
+
+type SearchResult = {
+  title: string;
+  content: string;
+  url: string;
+  score: number;
+};
+
+type SearchResponse = {
+  text?: string;
+  results?: SearchResult[];
+};
 
 const createWidget = () => {
   const container = document.createElement("div");
@@ -44,6 +66,7 @@ const createWidget = () => {
         box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
         position: relative;
         pointer-events: auto;
+        color: #222;
       }
       #${WIDGET_ID} .bubble.is-hidden {
         display: none;
@@ -74,6 +97,7 @@ const createWidget = () => {
         box-sizing: border-box;
         resize: none;
         min-height: 56px;
+        color: #222;
       }
       #${WIDGET_ID} .actions {
         display: flex;
@@ -90,6 +114,7 @@ const createWidget = () => {
         background: #f6f2bf;
         font-weight: bold;
         cursor: pointer;
+        color: #222;
       }
       #${WIDGET_ID} .result {
         max-height: 240px;
@@ -98,6 +123,7 @@ const createWidget = () => {
         white-space: pre-wrap;
         line-height: 1.4;
         padding: 6px 4px 2px;
+        color: #222;
       }
       #${WIDGET_ID} .stack {
         display: flex;
@@ -202,6 +228,27 @@ const createWidget = () => {
     container.querySelector<HTMLDivElement>(".bubble-result");
   const resultText = container.querySelector<HTMLDivElement>(".result-text");
   const irukaImage = container.querySelector<HTMLImageElement>(".iruka");
+  let latestResponse: SearchResponse | null = null;
+  let latestResultText = "";
+  let isDebugView = false;
+
+  const debugButton = createDebugButton(() => {
+    if (!resultText) return;
+    stopSpeech();
+    if (!isDebugView) {
+      const results = latestResponse?.results ?? [];
+      setResultText(resultText, formatDebugResults(results));
+      isDebugView = true;
+      debugButton.textContent = "戻る";
+      return;
+    }
+    setResultText(resultText, latestResultText || "結果がありません。");
+    isDebugView = false;
+    debugButton.textContent = "デバッグ";
+  });
+  if (speakButton?.parentElement) {
+    speakButton.parentElement.insertBefore(debugButton, speakButton);
+  }
 
   const setInputMode = (enabled: boolean) => {
     if (!inputBubble || !resultBubble) return;
@@ -225,16 +272,22 @@ const createWidget = () => {
     try {
       if (USE_MOCK) {
         await new Promise((resolve) => setTimeout(resolve, 400));
-        setResultText(resultText, MOCK_RESPONSE);
+        latestResponse = MOCK_RESPONSE;
+        latestResultText = latestResponse.text ?? "";
+        setResultText(resultText, latestResultText);
       } else {
         const response = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text }),
         });
-        const data = (await response.json()) as { text?: string };
-        setResultText(resultText, data?.text ?? "");
+        const data = (await response.json()) as SearchResponse;
+        latestResponse = data;
+        latestResultText = data?.text ?? "";
+        setResultText(resultText, latestResultText);
       }
+      isDebugView = false;
+      debugButton.textContent = "デバッグ";
       setInputMode(false);
     } catch {
       setResultText(resultText, "エラーが発生しました。");
@@ -269,6 +322,31 @@ const shouldEraseIruka = (text: string) => {
 
 const setResultText = (target: HTMLDivElement, text: string) => {
   target.innerHTML = linkifyText(text);
+};
+
+const formatDebugResults = (results: SearchResult[]) => {
+  if (!results.length) return "resultsが空です。";
+  return results
+    .map((item, index) => {
+      const title = item.title ? `#${index + 1} ${item.title}` : `#${index + 1}`;
+      return [
+        title,
+        `score: ${item.score}`,
+        `url: ${item.url}`,
+        "content:",
+        item.content ?? "",
+      ].join("\n");
+    })
+    .join("\n\n---\n\n");
+};
+
+const createDebugButton = (onClick: () => void) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn btn-debug";
+  button.textContent = "デバッグ";
+  button.addEventListener("click", onClick);
+  return button;
 };
 
 const linkifyText = (text: string) => {
