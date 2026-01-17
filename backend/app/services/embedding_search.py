@@ -1,5 +1,4 @@
 import os
-import asyncio
 
 import numpy as np
 from openai import OpenAI
@@ -23,38 +22,25 @@ def embed_text(text: str, model: str) -> np.ndarray:
     q = np.array(response.data[0].embedding, dtype=np.float32)
     return q / (np.linalg.norm(q) + 1e-12)
 
-async def build_final_message(search_results, user_input):
-    """
-    検索結果ごとにAIリクエストを非同期で実行し、メッセージを構築する
-    """
-    if not search_results:
-        return ""
+def build_final_message(search_results, user_input):
+    messages = []
 
-    async def process_item(item):
+    for item in search_results:
         title = item["title"]
         content = item["content"]
         url = item["url"]
 
-        # 同期関数である generate_content_answer を非同期的に実行 (スレッドプールを使用)
-        loop = asyncio.get_running_loop()
-        answer = await loop.run_in_executor(
-            None,  # デフォルトのExecutorを使用
-            generate_content_answer,
-            title,
-            content,
-            user_input
-        )
+        # AIに内容生成させる
+        answer = generate_content_answer(title, content, user_input)
 
         # URLを追記
-        return f"""{answer}
+        message_with_url = f"""{answer}
 
 参考URL:
 {url}
 """
 
-    # 全てのリクエストを並列実行
-    tasks = [process_item(item) for item in search_results]
-    messages = await asyncio.gather(*tasks)
+        messages.append(message_with_url)
 
     # 1メッセージにまとめる（空行1行あけ）
     final_message = "\n\n".join(messages)
