@@ -2,8 +2,7 @@ const WIDGET_ID = "wxt-dolphin-widget";
 const API_URL = "http://localhost:8000/api/text";
 const USE_MOCK = false;
 const MOCK_RESPONSE: SearchResponse = {
-  text:
-    "勤怠については下記のような情報がありました！業務内容や勤怠ルールは部署によって若干異なる場合がありますので、社内ポータルの最新情報もあわせて確認してください。\n\n1. 勤怠システムへのログイン手順\n- 会社ポータルからアクセス\n- 社員IDとパスワードを入力\n\n2. 休暇申請の流れ\n- 休暇種別を選択\n- 期間と理由を記入\n- 上長へ送信\n\n3. 参考リンク\nhttps://www.google.com",
+  text: "勤怠については下記のような情報がありました！業務内容や勤怠ルールは部署によって若干異なる場合がありますので、社内ポータルの最新情報もあわせて確認してください。\n\n1. 勤怠システムへのログイン手順\n- 会社ポータルからアクセス\n- 社員IDとパスワードを入力\n\n2. 休暇申請の流れ\n- 休暇種別を選択\n- 期間と理由を記入\n- 上長へ送信\n\n3. 参考リンク\nhttps://www.google.com",
   results: [
     {
       title: "勤怠ポリシー",
@@ -119,11 +118,14 @@ const createWidget = () => {
       #${WIDGET_ID} .result {
         max-height: 240px;
         min-height: 120px;
-        overflow: auto;
+        overflow-y: auto;
         white-space: pre-wrap;
         line-height: 1.4;
         padding: 6px 4px 2px;
         color: #222;
+      }
+      #${WIDGET_ID} .result > a{
+        word-wrap: break-word;
       }
       #${WIDGET_ID} .stack {
         display: flex;
@@ -328,7 +330,9 @@ const formatDebugResults = (results: SearchResult[]) => {
   if (!results.length) return "resultsが空です。";
   return results
     .map((item, index) => {
-      const title = item.title ? `#${index + 1} ${item.title}` : `#${index + 1}`;
+      const title = item.title
+        ? `#${index + 1} ${item.title}`
+        : `#${index + 1}`;
       return [
         title,
         `score: ${item.score}`,
@@ -365,7 +369,7 @@ const linkifyText = (text: string) => {
 
     const safeUrl = escapeHtml(url);
     parts.push(
-      `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`
+      `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`,
     );
 
     lastIndex = end;
@@ -415,7 +419,7 @@ const eraseIruka = (image: HTMLImageElement | null) => {
     () => {
       removeWidget();
     },
-    { once: true }
+    { once: true },
   );
 };
 
