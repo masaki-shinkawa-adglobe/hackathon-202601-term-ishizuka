@@ -58,7 +58,7 @@ def startup():
 
 
 @app.post("/api/text")
-def search(req: TextRequest):
+async def search(req: TextRequest):
     print("[search] start")
     text = req.text.strip()
     print(f"[search] input length={len(text)}")
@@ -84,6 +84,7 @@ def search(req: TextRequest):
     else:
         message = build_final_message(results, text)
     print(f"[search] message length={len(message)}")
+    message = await build_final_message(results, text)
 
     print("[search] response ready")
     return JSONResponse(
