@@ -11,6 +11,9 @@ from app.services.embedding_search import (
     search_similar,
     build_final_message,
 )
+from app.services.web_search_fallback import (
+    web_search_fallback
+)
 
 logging.basicConfig(level=logging.INFO)
 app = FastAPI()
@@ -90,7 +93,10 @@ def search(req: TextRequest):
         )
 
     print("[search] build_final_message")
-    message = build_final_message(results, text)
+    if not results:
+        message = web_search_fallback(text)
+    else:
+        message = build_final_message(results, text)
     print(f"[search] message length={len(message)}")
 
     print("[search] response ready")
