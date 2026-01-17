@@ -2,6 +2,20 @@ const WIDGET_ID = "wxt-dolphin-widget";
 const API_URL = "http://localhost:8000/api/text";
 const USE_MOCK = false;
 const MOCK_RESPONSE = "これはモック応答です。";
+const ERASE_KEYWORDS = [
+  "お前を消す方法",
+  "おまえをけす方法",
+  "お前をけす方法",
+  "おまえを消す方法",
+];
+const ERASE_ANIMATIONS = [
+  "erase-fade",
+  "erase-shrink",
+  "erase-spiral",
+  "erase-pop",
+  "erase-slide",
+  "erase-flip",
+];
 
 const createWidget = () => {
   const container = document.createElement("div");
@@ -91,6 +105,66 @@ const createWidget = () => {
         background: transparent;
         filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
       }
+      #${WIDGET_ID} .iruka.is-erasing {
+        pointer-events: none;
+      }
+      #${WIDGET_ID} .iruka.erase-fade {
+        animation: iruka-fade 0.7s ease-out forwards;
+      }
+      #${WIDGET_ID} .iruka.erase-shrink {
+        animation: iruka-shrink 0.7s ease-in forwards;
+      }
+      #${WIDGET_ID} .iruka.erase-spiral {
+        animation: iruka-spiral 0.9s ease-in forwards;
+      }
+      #${WIDGET_ID} .iruka.erase-pop {
+        animation: iruka-pop 0.6s ease-out forwards;
+      }
+      #${WIDGET_ID} .iruka.erase-slide {
+        animation: iruka-slide 0.8s ease-in forwards;
+      }
+      #${WIDGET_ID} .iruka.erase-flip {
+        animation: iruka-flip 0.7s ease-in forwards;
+      }
+      @keyframes iruka-fade {
+        to {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+      }
+      @keyframes iruka-shrink {
+        to {
+          opacity: 0;
+          transform: scale(0.1);
+        }
+      }
+      @keyframes iruka-spiral {
+        to {
+          opacity: 0;
+          transform: translate(40px, 30px) rotate(540deg) scale(0.1);
+        }
+      }
+      @keyframes iruka-pop {
+        40% {
+          transform: scale(1.15);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.2);
+        }
+      }
+      @keyframes iruka-slide {
+        to {
+          opacity: 0;
+          transform: translateX(120px);
+        }
+      }
+      @keyframes iruka-flip {
+        to {
+          opacity: 0;
+          transform: rotateY(180deg) scale(0.2);
+        }
+      }
     </style>
     <div class="stack">
       <div class="bubble bubble-input">
@@ -118,6 +192,7 @@ const createWidget = () => {
   const resultBubble =
     container.querySelector<HTMLDivElement>(".bubble-result");
   const resultText = container.querySelector<HTMLDivElement>(".result-text");
+  const irukaImage = container.querySelector<HTMLImageElement>(".iruka");
 
   const setInputMode = (enabled: boolean) => {
     if (!inputBubble || !resultBubble) return;
@@ -129,6 +204,12 @@ const createWidget = () => {
     if (!textarea || !searchButton || !resultText) return;
     const text = textarea.value.trim();
     if (!text) return;
+
+    if (shouldEraseIruka(text)) {
+      hideBubbles();
+      eraseIruka(irukaImage);
+      return;
+    }
 
     searchButton.disabled = true;
     searchButton.textContent = "送信中...";
@@ -165,6 +246,38 @@ const createWidget = () => {
   });
 
   return container;
+};
+
+  const shouldEraseIruka = (text: string) => {
+    return ERASE_KEYWORDS.some((keyword) => text.includes(keyword));
+  };
+
+const eraseIruka = (image: HTMLImageElement | null) => {
+  if (!image || image.classList.contains("is-erasing")) return;
+  image.classList.add("is-erasing");
+  const animation =
+    ERASE_ANIMATIONS[Math.floor(Math.random() * ERASE_ANIMATIONS.length)];
+  if (animation) image.classList.add(animation);
+  image.addEventListener(
+    "animationend",
+    () => {
+      removeWidget();
+    },
+    { once: true }
+  );
+};
+
+const removeWidget = () => {
+  const existing = document.getElementById(WIDGET_ID);
+  if (existing) existing.remove();
+};
+
+const hideBubbles = () => {
+  const widget = document.getElementById(WIDGET_ID);
+  if (!widget) return;
+  widget.querySelectorAll(".bubble").forEach((bubble) => {
+    bubble.classList.add("is-hidden");
+  });
 };
 
 const toggleWidget = () => {

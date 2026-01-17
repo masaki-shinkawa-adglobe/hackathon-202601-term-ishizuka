@@ -12,7 +12,7 @@
 
 ## 環境
 - frontend: WXT
-- backend: Laravel 12
+- backend: fastapi
 
 ## 方針（ハッカソン / 最小構成）
 - 最短で動くものを優先し、過剰な設計は避ける
