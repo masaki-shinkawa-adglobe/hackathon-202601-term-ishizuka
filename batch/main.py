@@ -11,15 +11,16 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 CSV_FILE = "embeddings.csv"
+SOURCE_CSV = "source_data.csv"
 
-def save_to_csv(text, embedding):
+def save_to_csv(title, url, content, embedding):
     """
-    テキストとエンベディングをCSVファイルに保存する（簡易DB代わり）
+    タイトル、URL、本文、エンベディングをCSVファイルに保存する
     """
-    # ベクトルを文字列として保存（カンマ区切りなど）
-    # 大規模な場合はベクトルDBが推奨されますが、学習用途ではCSVやPandasが手軽です
     data = {
-        "text": [text],
+        "title": [title],
+        "url": [url],
+        "content": [content],
         "embedding": [str(embedding)]
     }
     df_new = pd.DataFrame(data)
@@ -50,27 +51,35 @@ def get_embedding(text, model="text-embedding-3-small"):
     return response.data[0].embedding
 
 if __name__ == "__main__":
-    # サンプルテキストの一覧
-    texts = [
-        "こんにちは、世界！",
-        "こんばんは、世界！",
-        "サザエさんですよ！"
-    ]
+    # ソースデータをCSVから読み込む
+    if not os.path.exists(SOURCE_CSV):
+        print(f"エラー: {SOURCE_CSV} が見つかりません。")
+        exit(1)
 
-    for sample_text in texts:
+    df_source = pd.read_csv(SOURCE_CSV)
+
+    for _, row in df_source.iterrows():
+        title = row["title"]
+        url = row["url"]
+        content = row["content"] if pd.notna(row["content"]) else ""
+
+        # タイトルと本文を組み合わせてベクトル化（,区切り）
+        text_to_embed = f"{title}, {content}"
+
         try:
             # 埋め込みベクトルの取得
-            embedding = get_embedding(sample_text)
+            embedding = get_embedding(text_to_embed)
 
-            print(f"テキスト: {sample_text}")
+            print(f"処理中: {title}")
+            print(f"URL: {url}")
             print(f"ベクトルの次元数: {len(embedding)}")
             print(f"ベクトルの先頭5要素: {embedding[:5]}...")
 
             # CSV（DB代わり）に保存
-            save_to_csv(sample_text, embedding)
+            save_to_csv(title, url, content, embedding)
 
         except Exception as e:
-            print(f"エラーが発生しました ({sample_text}): {e}")
+            print(f"エラーが発生しました ({title}): {e}")
 
     # 保存された内容を表示してみる
     if os.path.exists(CSV_FILE):
