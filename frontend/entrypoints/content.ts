@@ -234,7 +234,7 @@ const createWidget = () => {
         </div>
       </div>
       <div class="bubble bubble-result is-hidden">
-        <div class="title">結果</div>
+        <div class="title result-title">結果</div>
         <div class="result result-text"></div>
         <div class="actions actions-result">
           <button class="btn btn-speak" type="button">読み上げ</button>
@@ -252,6 +252,7 @@ const createWidget = () => {
   const inputBubble = container.querySelector<HTMLDivElement>(".bubble-input");
   const resultBubble =
     container.querySelector<HTMLDivElement>(".bubble-result");
+  const resultTitle = container.querySelector<HTMLDivElement>(".result-title");
   const resultText = container.querySelector<HTMLDivElement>(".result-text");
   const irukaImage = container.querySelector<HTMLImageElement>(".iruka");
   let latestResponse: SearchResponse | null = null;
@@ -315,9 +316,11 @@ const createWidget = () => {
       }
       isDebugView = false;
       debugButton.textContent = "デバッグ";
+      updateResultTitle(resultTitle, latestResponse?.results?.length ?? 0);
       setInputMode(false);
     } catch {
       setResultText(resultText, "エラーが発生しました。");
+      updateResultTitle(resultTitle, 0);
       setInputMode(false);
     } finally {
       searchButton.disabled = false;
@@ -350,6 +353,14 @@ const shouldEraseIruka = (text: string) => {
 
 const setResultText = (target: HTMLDivElement, text: string) => {
   target.innerHTML = linkifyText(text);
+};
+
+const updateResultTitle = (
+  target: HTMLDivElement | null,
+  count: number
+) => {
+  if (!target) return;
+  target.textContent = `結果(${count}件)`;
 };
 
 const formatDebugResults = (results: SearchResult[]) => {
