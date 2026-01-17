@@ -323,10 +323,7 @@ const hideBubbles = () => {
 
 const toggleWidget = () => {
   const existing = document.getElementById(WIDGET_ID);
-  if (existing) {
-    existing.remove();
-    return;
-  }
+  if (existing) return;
   document.documentElement.appendChild(createWidget());
 };
 
