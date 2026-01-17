@@ -3,6 +3,8 @@ import os
 import numpy as np
 from openai import OpenAI
 
+from .content_service import generate_content_answer
+
 
 def _get_client() -> OpenAI:
     api_key = os.getenv("OPENAI_API_KEY")
