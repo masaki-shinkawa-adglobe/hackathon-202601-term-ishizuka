@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from app.services.data_loader import load_embeddings
-from app.services.embedding_search import embed_text, search_similar
+from app.services.embedding_search import embed_text, search_similar, build_final_message
 
 logging.basicConfig(level=logging.INFO)
 app = FastAPI()
@@ -44,7 +44,7 @@ def search(req: TextRequest):
         min_score=MIN_SCORE,
     )
 
-	message = build_final_message(results, text)
+    message = build_final_message(results, text)
 
 
     return {
