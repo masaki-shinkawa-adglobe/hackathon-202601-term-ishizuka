@@ -115,6 +115,30 @@ const createWidget = () => {
         cursor: pointer;
         color: #222;
       }
+      #${WIDGET_ID} .btn.is-loading {
+        cursor: default;
+        opacity: 0.8;
+        position: relative;
+        padding-right: 34px;
+      }
+      #${WIDGET_ID} .btn.is-loading::after {
+        content: "";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        width: 14px;
+        height: 14px;
+        margin-top: -7px;
+        border: 2px solid #bdb58f;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: iruka-spin 0.8s linear infinite;
+      }
+      @keyframes iruka-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
       #${WIDGET_ID} .result {
         max-height: 240px;
         min-height: 120px;
@@ -270,7 +294,8 @@ const createWidget = () => {
     }
 
     searchButton.disabled = true;
-    searchButton.textContent = "送信中...";
+    searchButton.textContent = "送信中";
+    searchButton.classList.add("is-loading");
     try {
       if (USE_MOCK) {
         await new Promise((resolve) => setTimeout(resolve, 400));
@@ -297,6 +322,7 @@ const createWidget = () => {
     } finally {
       searchButton.disabled = false;
       searchButton.textContent = "検索";
+      searchButton.classList.remove("is-loading");
     }
   };
 
