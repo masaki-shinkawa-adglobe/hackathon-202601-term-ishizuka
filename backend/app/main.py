@@ -58,7 +58,7 @@ def startup():
 
 
 @app.post("/api/text")
-def search(req: TextRequest):
+async def search(req: TextRequest):
     print("[search] start")
     text = req.text.strip()
     print(f"[search] input length={len(text)}")
@@ -82,7 +82,7 @@ def search(req: TextRequest):
     if not results:
         message = web_search_fallback(text)
     else:
-        message = build_final_message(results, text)
+        message = await build_final_message(results, text)
     print(f"[search] message length={len(message)}")
 
     print("[search] response ready")

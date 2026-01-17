@@ -1,9 +1,10 @@
 import os
+import asyncio
 
 import numpy as np
 from openai import OpenAI
 
-from .content_service import generate_content_answer
+from .content_service import generate_content_answer_async
 
 
 def _get_client() -> OpenAI:
@@ -22,30 +23,29 @@ def embed_text(text: str, model: str) -> np.ndarray:
     q = np.array(response.data[0].embedding, dtype=np.float32)
     return q / (np.linalg.norm(q) + 1e-12)
 
-def build_final_message(search_results, user_input):
-    messages = []
+async def build_final_message(search_results, user_input):
+    tasks = [
+        _build_message_for_item(item, user_input) for item in search_results
+    ]
+    messages = await asyncio.gather(*tasks)
 
-    for item in search_results:
-        title = item["title"]
-        content = item["content"]
-        url = item["url"]
+    # 1メッセージにまとめる（空行1行あけ）
+    return "\n\n".join(messages)
 
-        # AIに内容生成させる
-        answer = generate_content_answer(title, content, user_input)
+async def _build_message_for_item(item, user_input):
+    title = item["title"]
+    content = item["content"]
+    url = item["url"]
 
-        # URLを追記
-        message_with_url = f"""{answer}
+    # AIに内容生成させる（非同期）
+    answer = await generate_content_answer_async(title, content, user_input)
+
+    # URLを追記
+    return f"""{answer}
 
 参考URL:
 {url}
 """
-
-        messages.append(message_with_url)
-
-    # 1メッセージにまとめる（空行1行あけ）
-    final_message = "\n\n".join(messages)
-
-    return final_message
 
 def search_similar(
     q: np.ndarray,

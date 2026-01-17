@@ -1,4 +1,5 @@
 from app.services.openai_chat import chat_once
+import asyncio
 
 DEFAULT_SYSTEM_PROMPT = (
     "あなたは社内ナレッジベースの検索をサポートする優秀なAIアシスタントです。\n"
@@ -10,9 +11,11 @@ DEFAULT_SYSTEM_PROMPT = (
     "4. 自然で親しみやすい日本語で回答してください。"
 )
 
-def generate_content_answer(title: str, content: str, user_input: str) -> str:
+async def generate_content_answer_async(
+    title: str, content: str, user_input: str
+) -> str:
     """
-    ナレッジベースの情報に基づいた要約回答を生成する
+    ナレッジベースの情報に基づいた要約回答を非同期で生成する
     """
     prompt = (
         f"ユーザーの入力: {user_input}\n\n"
@@ -20,5 +23,4 @@ def generate_content_answer(title: str, content: str, user_input: str) -> str:
         f"タイトル: {title}\n"
         f"本文: {content}"
     )
-
-    return chat_once(prompt, system=DEFAULT_SYSTEM_PROMPT)
+    return await asyncio.to_thread(chat_once, prompt, DEFAULT_SYSTEM_PROMPT)
