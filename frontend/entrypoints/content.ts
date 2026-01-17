@@ -1,7 +1,8 @@
 const WIDGET_ID = "wxt-dolphin-widget";
 const API_URL = "http://localhost:8000/api/text";
-const USE_MOCK = false;
-const MOCK_RESPONSE = "これはモック応答です。";
+const USE_MOCK = true;
+const MOCK_RESPONSE =
+  "勤怠については下記のような情報がありました！\nhttps://xxxxxx.com/kintai";
 const ERASE_KEYWORDS = [
   "お前を消す方法",
   "おまえをけす方法",
@@ -216,7 +217,7 @@ const createWidget = () => {
     try {
       if (USE_MOCK) {
         await new Promise((resolve) => setTimeout(resolve, 400));
-        resultText.textContent = MOCK_RESPONSE;
+        setResultText(resultText, MOCK_RESPONSE);
       } else {
         const response = await fetch(API_URL, {
           method: "POST",
@@ -224,11 +225,11 @@ const createWidget = () => {
           body: JSON.stringify({ text }),
         });
         const data = (await response.json()) as { text?: string };
-        resultText.textContent = data?.text ?? "";
+        setResultText(resultText, data?.text ?? "");
       }
       setInputMode(false);
     } catch {
-      resultText.textContent = "エラーが発生しました。";
+      setResultText(resultText, "エラーが発生しました。");
       setInputMode(false);
     } finally {
       searchButton.disabled = false;
@@ -248,9 +249,49 @@ const createWidget = () => {
   return container;
 };
 
-  const shouldEraseIruka = (text: string) => {
-    return ERASE_KEYWORDS.some((keyword) => text.includes(keyword));
-  };
+const shouldEraseIruka = (text: string) => {
+  return ERASE_KEYWORDS.some((keyword) => text.includes(keyword));
+};
+
+const setResultText = (target: HTMLDivElement, text: string) => {
+  target.innerHTML = linkifyText(text);
+};
+
+const linkifyText = (text: string) => {
+  const urlRegex = /https?:\/\/[^\s]+/g;
+  const parts: string[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = urlRegex.exec(text)) !== null) {
+    const url = match[0];
+    const start = match.index;
+    const end = start + url.length;
+
+    const before = text.slice(lastIndex, start);
+    parts.push(escapeHtml(before));
+
+    const safeUrl = escapeHtml(url);
+    parts.push(
+      `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`
+    );
+
+    lastIndex = end;
+  }
+
+  parts.push(escapeHtml(text.slice(lastIndex)));
+
+  return parts.join("").replaceAll("\n", "<br>");
+};
+
+const escapeHtml = (value: string) => {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+};
 
 const eraseIruka = (image: HTMLImageElement | null) => {
   if (!image || image.classList.contains("is-erasing")) return;
