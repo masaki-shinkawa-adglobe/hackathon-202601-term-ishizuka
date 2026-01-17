@@ -78,20 +78,6 @@ def search(req: TextRequest):
     )
     print(f"[search] results count={len(results)}")
 
-    if len(results) == 0:
-        print("[search] no results -> empty response")
-        return JSONResponse(
-            content={
-                "text": "結果が見つかりませんでした。",
-                "results": [],
-            },
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*",
-            },
-        )
-
     print("[search] build_final_message")
     if not results:
         message = web_search_fallback(text)
