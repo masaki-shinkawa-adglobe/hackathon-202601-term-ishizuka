@@ -31,14 +31,21 @@ def startup():
 
     logging.info("startup: begin")
 
-    df = pd.read_csv(CSV_PATH, dtype=str, keep_default_na=False)
+    # CSVが壊れていても起動を落とさないため、Pythonエンジンで不正行はスキップする
+    df = pd.read_csv(
+        CSV_PATH,
+        dtype=str,
+        keep_default_na=False,
+        engine="python",
+        on_bad_lines="skip",
+    )
     logging.info(f"CSV loaded: rows={len(df)}")
 
     rows = []
     emb_list = []
 
     for idx, r in df.iterrows():
-        raw = (r.get("embeddings") or "").strip()
+        raw = (r.get("embeddings") or r.get("embedding") or "").strip()
 
         # 空ならスキップ
         if raw == "":
